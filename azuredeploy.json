@@ -320,7 +320,7 @@
       "vmContainerName": "vhds",
       "adPDCVMName": "usedaz-pdc",
       "adBDCVMName": "usedaz-bdc",
-      "sqlVMName": "usedazsql-",
+      "sqlVMName": "usedazsql",
       "sqlwVMName": "usedazsql-w",
       "spwebVMName": "usedazsps-web",
       "spappVMName": "usedazsps-app",

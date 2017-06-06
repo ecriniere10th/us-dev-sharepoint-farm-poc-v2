@@ -104,7 +104,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId(resourceGroup().name,'Microsoft.Network/networkInterfaces',parameters('sqlVMName'))]"
+              "id": "[resourceId(resourceGroup().name,'Microsoft.Network/networkInterfaces',parameters('sqlNicName'))]"
             }
           ]
         },

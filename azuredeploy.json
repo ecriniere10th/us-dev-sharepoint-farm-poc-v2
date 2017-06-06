@@ -350,7 +350,7 @@
     "adPdcNicName": "[concat(variables('vmSettings').adPDCVMName,'-nic')]",
     "adBdcNicName": "[concat(variables('vmSettings').adBDCVMName,'-nic')]",
     "sqlwNicName": "[concat(variables('vmSettings').sqlwVMName,'-nic')]",
-    "sqlNicName": "usedaz-sql-nic",
+    "sqlNicName": "[concat(variables('vmSettings').sqlVMName,'-nic')]",
     "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "staticSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('subnetNames').staticSubnetName)]",
     "sqlSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('subnetNames').sqlSubnetName)]",

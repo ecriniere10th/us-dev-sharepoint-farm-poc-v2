@@ -8,7 +8,7 @@
         "group": "basics",
         "description": "Name of the SharePoint farm"
       },
-      "defaultValue": "usedazspfarm"
+      "defaultValue": "usedazsp"
     },
     "location": {
       "type": "string",
@@ -79,7 +79,7 @@
         "group": "Infrastructure settings",
         "description": "Change this value to your repo name if deploying from a fork"
       },
-      "defaultValue": "https://raw.githubusercontent.com/ecriniere10th/us-dev-sharepoint-farm-poc/master"
+      "defaultValue": "https://raw.githubusercontent.com/ecriniere10th/us-dev-sharepoint-farm-poc-v2/master"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -104,7 +104,7 @@
         "group": "Active Directory settings",
         "description": "The size of the AD VMs created"
       },
-      "defaultValue": "Standard_DS1_V2"
+      "defaultValue": "Standard_DS2_V2"
     },
     "adPdcNicIPAddress": {
       "type": "string",
@@ -219,7 +219,7 @@
         "group": "SharePoint Server settings",
         "description": "The DNS Prefix for the Public IP Address for the Sharepoint Web Application"
       },
-      "defaultValue": "usedazspfarm"
+      "defaultValue": "usedevspfarm"
     },
     "spVMSize": {
       "type": "string",
@@ -280,7 +280,7 @@
     "spCAIPAddressName": "[concat(parameters('spWebIPAddressName'),'admin')]",
     "configDatabaseName": "SP_Config",
     "administrationContentDatabaseName": "SP_AdminContent",
-    "contentDatabaseName": "spfarm_Content",
+    "contentDatabaseName": "spARM_Content",
     "lbSettings": {
       "rdpLBFE": "rdpLBFE",
       "sqlLBFE": "sqlLBFE",
@@ -318,12 +318,12 @@
       "noOfSqlVMs": 1,
       "noOfspRoleVMs": 1,
       "vmContainerName": "vhds",
-      "adPDCVMName": "ad-pdc",
-      "adBDCVMName": "ad-bdc",
-      "sqlVMName": "sql-",
-      "sqlwVMName": "sql-w",
-      "spwebVMName": "sps-web-",
-      "spappVMName": "sps-app-",
+      "adPDCVMName": "usedaz-pdc",
+      "adBDCVMName": "usedaz-bdc",
+      "sqlVMName": "usedazsql-",
+      "sqlwVMName": "usedazsql-w",
+      "spwebVMName": "usedazsps-web",
+      "spappVMName": "usedazsps-app",
       "windowsImagePublisher": "MicrosoftWindowsServer",
       "windowsImageOffer": "WindowsServer",
       "windowsImageSKU": "2012-R2-Datacenter",
@@ -332,10 +332,12 @@
       "sqlImageSKU": "Enterprise",
       "spImagePublisher": "MicrosoftSharePoint",
       "spImageOffer": "MicrosoftSharePointServer",
-      "spImageSKU": "2016",
+      "spImageSKU": "2013",
       "rdpPort": 3389,
       "spCentralAdminPort": 80,
       "windowsDiskSize": 128,
+      "sqlDataDisk": "SQLDataDisk",
+      "sqlLogDisk": "SQLLogDisk",
       "sqlDiskSize": 1000,
       "spDiskSize": 128
     },
@@ -348,6 +350,7 @@
     "adPdcNicName": "[concat(variables('vmSettings').adPDCVMName,'-nic')]",
     "adBdcNicName": "[concat(variables('vmSettings').adBDCVMName,'-nic')]",
     "sqlwNicName": "[concat(variables('vmSettings').sqlwVMName,'-nic')]",
+    "sqlNicName": "sqlNic",
     "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "staticSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('subnetNames').staticSubnetName)]",
     "sqlSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('subnetNames').sqlSubnetName)]",
@@ -384,6 +387,8 @@
       "spCAlbFEConfigID": "[concat(variables('ids').spCAlbID,'/frontendIPConfigurations/',variables('lbSettings').spCALBFE)]",
       "spCANATRuleID": "[concat(variables('ids').spCAlbID,'/inboundNatRules/',variables('spCANAT'))]"
     },
+    "sqlPrepareModulesURL": "[concat(parameters('_artifactsLocation'),'/','dscv2','/','PrepareSqlServer.ps1.zip', parameters('_artifactsLocationSasToken'))]",
+    "sqlPreparationFunction": "PrepareSqlServer.ps1\\PrepareSqlServer",
     "subnets": [
       {
         "name": "[variables('subnetNames').staticSubnetName]",
@@ -745,6 +750,9 @@
           "spCANATRuleID": {
             "value": "[variables('derivedIds').spCANATRuleID]"
           },
+          "sqlNicName": {
+            "value": "[variables('sqlNicName')]"
+          },
           "sqlwNicName": {
             "value": "[variables('sqlwNicName')]"
           }
@@ -851,7 +859,7 @@
       }
     },
     {
-      "name": "ProvisioningSQLVirtualMachines",
+      "name": "ProvisioningSQLServerVM",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
@@ -862,7 +870,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'),'/','nestedtemplates','/','provisioningSQLVMs.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[concat(parameters('_artifactsLocation'),'/','nestedtemplates','/','provisioningSQLVM.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -875,167 +883,42 @@
           "storageAccountNamePrefix": {
             "value": "[parameters('storageAccountNamePrefix')]"
           },
-          "availabilitySet": {
+          "sqlAvailabilitySetName": {
             "value": "[variables('ids').sqlAvailabilitySetName]"
           },
           "sqlVMSize": {
             "value": "[parameters('sqlVMSize')]"
           },
+          "vmContainerName": {
+            "value": "[variables('vmSettings').vmContainerName]"
+          },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "windowsImagePublisher": {
-            "value": "[variables('vmSettings').windowsImagePublisher]"
+          "sqlDataDisk": {
+            "value": "[variables('vmSettings').sqlDataDisk]"
           },
-          "windowsImageOffer": {
-            "value": "[variables('vmSettings').windowsImageOffer]"
+          "sqlLogDisk": {
+            "value": "[variables('vmSettings').sqlLogDisk]"
           },
-          "windowsImageSKU": {
-            "value": "[variables('vmSettings').windowsImageSKU]"
+          "sqlNicName": {
+            "value": "[variables('sqlNicName')]"
           },
-          "vmContainerName": {
-            "value": "[variables('vmSettings').vmContainerName]"
+          "sqlPrepareModulesURL": {
+            "value": "[variables('sqlPrepareModulesURL')]"
           },
-          "sqlImagePublisher": {
-            "value": "[variables('vmSettings').sqlImagePublisher]"
+          "sqlPreparationFunction": {
+            "value": "[variables('sqlPreparationFunction')]"
           },
-          "sqlImageOffer": {
-            "value": "[variables('vmSettings').sqlImageOffer]"
-          },
-          "sqlImageSKU": {
-            "value": "[variables('vmSettings').sqlImageSKU]"
-          },
-          "domainName": {
-            "value": "[parameters('domainName')]"
-          },
-          "sqlAOPrepareModulesURL": {
-            "value": "[concat(parameters('_artifactsLocation'),'/','dscv2','/','PrepareAlwaysOnSqlServer.ps1.zip', parameters('_artifactsLocationSasToken'))]"
-          },
-          "sqlAOPrepareFunction": {
-            "value": "PrepareAlwaysOnSqlServer.ps1\\PrepareAlwaysOnSqlServer"
-          },
-          "prepareClusterModulesURL": {
-            "value": "[concat(parameters('_artifactsLocation'),'/','dscv2','/','PrepareFailoverCluster.ps1.zip', parameters('_artifactsLocationSasToken'))]"
-          },
-          "prepareClusterConfigurationFunction": {
-            "value": "PrepareFailoverCluster.ps1\\PrepareFailoverCluster"
-          },
-          "sharePath": {
-            "value": "[variables('sharePath')]"
-          },
-          "witnessVMSize": {
-            "value": "[parameters('witnessVMSize')]"
-          },
-          "sqlwVMName": {
-            "value": "[variables('vmSettings').sqlwVMName]"
-          },
-          "sqlwNicName": {
-            "value": "[variables('sqlwNicName')]"
-          },
-          "fswPreparationModulesURL": {
-            "value": "[concat(parameters('_artifactsLocation'),'/','dscv2','/','PrepareFileShareWitness.ps1.zip', parameters('_artifactsLocationSasToken'))]"
-          },
-          "fswPreparationFunction": {
-            "value": "PrepareFileShareWitness.ps1\\PrepareFileShareWitness"
-          },
-          "DNSServer": {
+          "DNSServerAddress": {
             "value": "[parameters('adPdcNicIPAddress')]"
           }
         }
       }
-    },
-    {
-      "name": "ConfiguringSQLAlwaysOnCluster",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [        
-        "Microsoft.Resources/deployments/ProvisioningSQLVirtualMachines"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'),'/','nestedtemplates','/','configuringSQLAlwaysOnCluster.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "sqlVMName": {
-            "value": "[variables('vmSettings').sqlVMName]"
-          },
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "domainName": {
-            "value": "[parameters('domainName')]"
-          },
-          "sqlAOConfigurationModulesURL": {
-            "value": "[concat(parameters('_artifactsLocation'),'/','dscv2','/','ConfigureAlwaysOnSqlServer.ps1.zip', parameters('_artifactsLocationSasToken'))]"
-          },
-          "sqlAOConfigurationFunction": {
-            "value": "ConfigureAlwaysOnSqlServer.ps1\\ConfigureAlwaysOnSqlServer"
-          },
-          "sqlAOEPName": {
-            "value": "[variables('sqlAOEPName')]"
-          },
-          "sqlServerServiceAccountUserName": {
-            "value": "[parameters('sqlServerServiceAccountUserName')]"
-          },
-          "sharePointSetupUserAccountUserName": {
-            "value": "[parameters('sharePointSetupUserAccountUserName')]"
-          },
-          "sqlServerServiceAccountPassword": {
-            "value": "[parameters('sqlServerServiceAccountPassword')]"
-          },
-          "sharePointSetupUserAccountPassword": {
-            "value": "[parameters('sharePointSetupUserAccountPassword')]"
-          },
-          "configureClusterModulesURL": {
-            "value": "[concat(parameters('_artifactsLocation'),'/','dscv2','/','ConfigureFailoverCluster.ps1.zip', parameters('_artifactsLocationSasToken'))]"
-          },
-          "configureClusterConfigurationFunction": {
-            "value": "ConfigureFailoverCluster.ps1\\ConfigureFailoverCluster"
-          },
-          "clusterName": {
-            "value": "[variables('clusterName')]"
-          },
-          "sharePath": {
-            "value": "[variables('sharePath')]"
-          },
-          "sqlAOAGName": {
-            "value": "[variables('sqlAOAGName')]"
-          },
-          "sqlAOListenerName": {
-            "value": "[variables('sqlAOListenerName')]"
-          },
-          "sqlLBName": {
-            "value": "[variables('lbSettings').sqlLBName]"
-          },
-          "sqlLBIPAddress": {
-            "value": "[parameters('sqlLBIPAddress')]"
-          },
-          "adPDCVMName": {
-            "value": "[variables('vmSettings').adPDCVMName]"
-          },
-          "sqlwVMName": {
-            "value": "[variables('vmSettings').sqlwVMName]"
-          },
-          "fswConfigurationModulesURL": {
-            "value": "[concat(parameters('_artifactsLocation'),'/','dscv2','/','ConfigureFileShareWitness.ps1.zip', parameters('_artifactsLocationSasToken'))]"
-          },
-          "fswConfigurationFunction": {
-            "value": "ConfigureFileShareWitness.ps1\\ConfigureFileShareWitness"
-          }
-        }
-      }
-    },
+    },   
     {
       "name": "CreatingSharepointVirtualMachines",
       "type": "Microsoft.Resources/deployments",
@@ -1105,97 +988,8 @@
           }
         }
       }
-    },
-    {
-      "name": "ConfiguringSharepoint",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/ConfiguringSQLAlwaysOnCluster",
-        "Microsoft.Resources/deployments/CreatingSharepointVirtualMachines"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'),'/','nestedtemplates','/','configuringSharePoint.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "spappVMName": {
-            "value": "[variables('vmSettings').spappVMName]"
-          },
-          "sqlVMName": {
-            "value": "[variables('vmSettings').sqlVMName]"
-          },
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "spConfigurationModulesURL": {
-            "value": "[concat(parameters('_artifactsLocation'),'/','dscv2','/','ConfigureSharePointServerHA.ps1.zip', parameters('_artifactsLocationSasToken'))]"
-          },
-          "spConfigurationFunction": {
-            "value": "ConfigureSharePointServerHA.ps1\\ConfigureSharePointServerHA"
-          },
-          "domainName": {
-            "value": "[parameters('domainName')]"
-          },
-          "adminUserName": {
-            "value": "[parameters('adminUserName')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "sharePointSetupUserAccountUserName": {
-            "value": "[parameters('sharePointSetupUserAccountUserName')]"
-          },
-          "sharePointFarmAccountUserName": {
-            "value": "[parameters('sharePointFarmAccountUserName')]"
-          },
-          "sqlServerServiceAccountUserName": {
-            "value": "[parameters('sqlServerServiceAccountUserName')]"
-          },
-          "sqlAOAGName": {
-            "value": "[variables('sqlAOAGName')]"
-          },
-          "administrationContentDatabaseName": {
-            "value": "[variables('administrationContentDatabaseName')]"
-          },
-          "configDatabaseName": {
-            "value": "[variables('configDatabaseName')]"
-          },
-          "contentDatabaseName": {
-            "value": "[variables('contentDatabaseName')]"
-          },
-          "sharepointCAfqdn": {
-            "value": "[variables('sharepointCAfqdn')]"
-          },
-          "sharePointSetupUserAccountPassword": {
-            "value": "[parameters('sharePointSetupUserAccountPassword')]"
-          },
-          "sharePointFarmAccountPassword": {
-            "value": "[parameters('sharePointFarmAccountPassword')]"
-          },
-          "sharePointFarmPassphrasePassword": {
-            "value": "[parameters('sharePointFarmPassphrasePassword')]"
-          },
-          "sqlServerServiceAccountPassword": {
-            "value": "[parameters('sqlServerServiceAccountPassword')]"
-          },
-          "spwebVMName": {
-            "value": "[variables('vmSettings').spwebVMName]"
-          },
-          "sharepointFarmName": {
-            "value": "[parameters('sharepointFarmName')]"
-          },
-          "sharepointWebfqdn": {
-            "value": "[variables('sharepointWebfqdn')]"
-          },
-          "spSiteTemplateName": {
-            "value": "[parameters('spSiteTemplateName')]"
-          }
-        }
-      }
     }
+   
   ],
   "outputs": {
     "fqdn": {

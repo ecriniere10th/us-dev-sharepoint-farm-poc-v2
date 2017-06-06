@@ -56,6 +56,9 @@
     "spCANATRuleID": {
       "type": "string"
     },
+    "sqlNicName": {
+      "type": "string"
+    },
     "sqlwNicName": {
       "type": "string"
     }
@@ -92,34 +95,10 @@
       }
     },
     {
-      "name": "[parameters('adBDCNicName')]",
+      "name": "[parameters('sqlNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[parameters('adBDCNICIPAddress')]",
-              "subnet": {
-                "id": "[parameters('staticSubnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "[concat(parameters('sqlVMName'), copyIndex(),'-nic')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "copy": {
-        "name": "sqlnicLoop",
-        "count": 2
-      },
+      "apiVersion": "2015-06-15",      
       "properties": {
         "ipConfigurations": [
           {
@@ -138,26 +117,7 @@
           }
         ]
       }
-    },
-    {
-      "name": "[parameters('sqlwNicName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[parameters('sqlSubnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
+    },    
     {
       "name": "[concat(parameters('spwebVMName'), copyIndex(),'-nic')]",
       "type": "Microsoft.Network/networkInterfaces",
@@ -165,7 +125,7 @@
       "apiVersion": "2015-06-15",
       "copy": {
         "name": "spWebnicLoop",
-        "count": 2
+        "count": 1
       },
       "properties": {
         "ipConfigurations": [
@@ -214,26 +174,7 @@
           }
         ]
       }
-    },
-    {
-      "name": "[concat(parameters('spappVMName'),'1-nic')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[parameters('spAppSubnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    }
+    }    
   ],
   "outputs": {}
 }

@@ -112,16 +112,9 @@
               "userName": "[parameters('sqlServerServiceAccountUserName')]",
               "password": "privateSettingsRef:sqlServerServiceAccountPassword"
             },
-            "databaseName": "[parameters('configDatabaseName')]",
-            "sqlAlwaysOnAvailabilityGroupName": "[parameters('sqlAOAGName')]",
-            "primaryReplica": "[concat(parameters('sqlVMName'),'1')]",
-            "secondaryReplica": "[concat(parameters('sqlVMName'),'0')]",
-            "databaseNames": [
-              "[parameters('administrationContentDatabaseName')]",
-              "[parameters('configDatabaseName')]"
-            ],
+            "databaseName": "[parameters('configDatabaseName')]",                       
             "administrationContentDatabaseName": "[parameters('administrationContentDatabaseName')]",
-            "databaseServer": "[concat(parameters('sqlVMName'),'1.',parameters('domainName'))]",
+            "databaseServer": "[concat(parameters('sqlVMName'),'.',parameters('domainName'))]",
             "configuration": "[concat('{\"roles\":[{\"type\":\"application\",\"properties\":{\"fqdn\":\"',parameters('sharepointCAfqdn'),'\",\"port\":80}}],\"configureForHa\":\"True\",\"loadBalancedSetProbePort\":8088}')]"
           }
         },
@@ -176,12 +169,8 @@
               "password": "privateSettingsRef:sqlServerServiceAccountPassword"
             },
             "databaseName": "[parameters('configDatabaseName')]",
-            "administrationContentDatabaseName": "[parameters('administrationContentDatabaseName')]",
-            "sqlAlwaysOnAvailabilityGroupName": "[parameters('sqlAOAGName')]",
-            "primaryReplica": "[concat(parameters('sqlVMName'),'1')]",
-            "secondaryReplica": "[concat(parameters('sqlVMName'),'0')]",
-            "databaseNames": "[parameters('contentDatabaseName')]",
-            "databaseServer": "[concat(parameters('sqlVMName'),'1.',parameters('domainName'))]",
+            "administrationContentDatabaseName": "[parameters('administrationContentDatabaseName')]",                        
+            "databaseServer": "[concat(parameters('sqlVMName'),'.',parameters('domainName'))]",
             "configuration": "[concat('{\"roles\":[{\"type\":\"web\",\"properties\":{\"webApp\":{\"name\":\"',parameters('sharepointFarmName'),'\",\"applicationPool\":\"',parameters('sharepointFarmName'),' AppPool\",\"applicationPoolAccount\":\"', parameters('sharePointFarmAccountUserName'),'\",\"url\":\"http://',parameters('sharepointWebfqdn'),'\",\"port\":80,\"hostHeader\":\"',parameters('sharepointWebfqdn'),'\",\"databaseName\":\"',parameters('contentDatabaseName'),'\"},\"site\":{\"name\":\"',parameters('sharepointFarmName'),'\",\"template\":\"',parameters('spSiteTemplateName'),'\",\"url\":\"http://',parameters('sharepointWebfqdn'),'\",\"ownerAliasDomain\":\"',parameters('domainName'),'\",\"ownerAliasUserName\":\"',parameters('sharePointFarmAccountUserName'),'\",\"secondaryOwnerAliasDomain\":\"',parameters('domainName'),'\",\"secondaryOwnerAliasUserName\":\"',parameters('adminUserName'),'\"}}}],\"configureForHa\":\"True\",\"loadBalancedSetProbePort\":8088}')]"
           }
         },

@@ -72,3 +72,5 @@ This template will create a SQL Server 2014 Always On Availability Group using t
 |windowsDiskSize|The size of the VHD allocated for AD and Witness VMs Data Disk|
 |sqlDiskSize|The size of the the VHD allocated for SQL VMs Data and Log Disks|
 |spDiskSize|The size of the VHD allocated for the SP VMs Data Disk|
+
+This is a test
